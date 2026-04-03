@@ -1,0 +1,146 @@
+---
+title: "ora_data_final_wrangling"
+output: html_document
+---
+
+#1. Setup
+
+```{r Setup, include=FALSE}
+# Sets pseudo random number generator seed to fixed value for reproducibility
+set.seed(1)
+
+# Check if package 'here' is installed; if not, install. 
+if (!require("here")) install.packages("here")
+
+# Load 'here' package
+library(here)
+
+# Increase timeout for downloading packages in case of slow download speed
+options(timeout = 300)
+
+# Check if package 'here' is installed; if not, install. 
+if (!require("dplyr")) install.packages("dplyr")
+
+# Load 'here' package
+library(dplyr)
+
+# Remove scientific notations
+options(scipen = 999) 
+
+```
+
+#2. Data Load
+
+```{r load data T1}
+# load child raw data
+data_child_raw_t1 <- read.csv(here("data", "data_raw", "Template_P1_T1_ORA - ChildMeasures_raw.csv"))
+
+# load child aggregate data
+data_child_agg_t1 <- read.csv(here("data", "data_raw", "Template_P1_T1_ORA - ChildMeasures_aggr.csv"))
+
+# load parent raw data
+data_parent_raw_t1 <- read.csv(here("data", "data_raw", "Template_P1_T1_ORA - ParentalQuestionnaires_raw.csv"))
+
+# load parent aggregate data
+data_parent_agg_t1 <- read.csv(here("data", "data_raw", "Template_P1_T1_ORA - ParentalQuestionnaires_aggr.csv"))
+
+```
+
+```{r load data T2}
+# load child raw data
+data_child_raw_t2 <- read.csv(here("data", "data_raw", "Template_P1_T2_ORA - ChildMeasures_raw.csv"))
+
+# load child aggregate data
+data_child_agg_t2 <- read.csv(here("data", "data_raw", "Template_P1_T2_ORA - ChildMeasures_aggr.csv"))
+
+# load parent raw data
+data_parent_raw_t2 <- read.csv(here("data", "data_raw", "Template_P1_T2_ORA - ParentalQuestionnaires_raw.csv"))
+
+# load parent aggregate data
+data_parent_agg_t2 <- read.csv(here("data", "data_raw", "Template_P1_T2_ORA - ParentalQuestionnaires_aggr.csv"))
+
+```
+
+#3. Merge Datasets
+
+```{r t1}
+# combine raw and aggregate child data for T1
+data_child_t1 <- full_join(data_child_raw_t1,
+                           data_child_agg_t1,
+                           by = "ID",
+                           relationship = "one-to-one",
+                           suffix = c("_raw", "_agg"))
+
+# combine raw and aggregate parent data for t1
+data_parent_t1 <- full_join(data_parent_raw_t1,
+                            data_parent_agg_t1,
+                            by = "ID",
+                            relationship = "one-to-one",
+                           suffix = c("_raw", "_agg"))
+```
+
+```{r t2}
+# combine raw and aggregate child data for t2
+data_child_t2 <- full_join(data_child_raw_t2,
+                           data_child_agg_t2,
+                           by = "ID",
+                           relationship = "one-to-one",
+                           suffix = c("_raw", "_agg"))
+
+# combine raw and aggregate parent data for t2
+data_parent_t2 <- full_join(data_parent_raw_t2,
+                            data_parent_agg_t2,
+                            by = "ID",
+                            relationship = "one-to-one",
+                           suffix = c("_raw", "_agg"))
+```
+
+```{r across times}
+# combine t1 and t2 child data
+data_child <- full_join(data_child_t1,
+                        data_child_t2,
+                        by = "ID",
+                        relationship = "one-to-one",
+                        suffix = c("_t1", "_t2"))
+
+# combine t1 and t2 parent data
+data_parent <- full_join(data_parent_t1,
+                        data_parent_t2,
+                        by = "ID",
+                        relationship = "one-to-one",
+                        suffix = c("_t1", "_t2"))
+
+```
+
+```{r child + parent}
+data <- full_join(data_child,
+                  data_parent,
+                  by = "ID",
+                  relationship = "one-to-one",
+                  suffix = c("_child", "_parent"))
+```
+
+```{r anonymize}
+# Remove unique identifier
+
+data <- data %>%
+  select(-ID_child_raw_t1_child,
+         -ID_child_raw_t2_child,
+         -ID_child_raw_t1_parent,
+         -ID_child_raw_t2_parent,
+         -ID_child_agg_t1_child,
+         -ID_child_agg_t2_child,
+         -ID_child_agg_t1_parent,
+         -ID_child_agg_t2_parent,
+         -X)
+
+```
+
+#5. Export
+
+```{r}
+write.csv(data,
+          here("data", "data_clean", "data_ora_complete_final.csv"),
+          row.names = FALSE)
+
+```
